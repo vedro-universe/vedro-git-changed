@@ -13,7 +13,7 @@ def find_dev_required():
 
 setup(
     name="vedro-git-changed",
-    version="0.0.1",
+    version="0.1.0",
     description=("Vedro plugin that runs test scenarios which have changed "
                  "relative to the specified git branch"),
     long_description=open("README.md").read(),

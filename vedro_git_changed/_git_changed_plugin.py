@@ -21,7 +21,7 @@ class VedroGitChangedPlugin(Plugin):
         self._local_storage = local_storage_factory(self)
         self._git_repo = git_repo_factory()
         self._branch: Union[str, None] = None
-        self._cache_duration: int = 60
+        self._cache_duration: int = 60  # seconds
         self._last_fetched: Nilable[int] = Nil
         self._no_changed: bool = False
 

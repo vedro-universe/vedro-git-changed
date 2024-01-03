@@ -49,6 +49,14 @@ class GitRepo:
 
     def get_changed_files(self, against_branch: str, target_directory: Path) -> Set[Path]:
         try:
+            # Using git diff with --diff-filter=ACMTR to select only files that are:
+            # A - Added: Files that are new in the repository
+            # C - Copied: Files that are copied from another file (with a recorded copy)
+            # M - Modified: Files that have been changed
+            # T - Type changed: Files that have had their type changed (e.g., regular file, symlink)
+            # R - Renamed: Files that have been renamed
+            # For more details on the git diff command and its options, see the Git documentation:
+            # https://git-scm.com/docs/git-diff
             diff = self.repo.git.diff("--name-only", "--diff-filter=ACMTR",
                                       f"origin/{against_branch}...HEAD", "--", ".")
         except GitCommandError as e:

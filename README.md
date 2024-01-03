@@ -5,7 +5,7 @@
 [![PyPI - Downloads](https://img.shields.io/pypi/dm/vedro-git-changed?style=flat-square)](https://pypi.python.org/pypi/vedro-git-changed/)
 [![Python Version](https://img.shields.io/pypi/pyversions/vedro-git-changed.svg?style=flat-square)](https://pypi.python.org/pypi/vedro-git-changed/)
 
-[vedro-git-changed](https://pypi.org/project/vedro-git-changed/) is a Vedro plugin that runs test scenarios which have changed relative to the specified git branch.
+[vedro-git-changed](https://pypi.org/project/vedro-git-changed/) is a [Vedro](https://vedro.io) plugin that runs test scenarios which have changed relative to the specified git branch.
 
 ## Installation
 

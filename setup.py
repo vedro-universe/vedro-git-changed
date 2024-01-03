@@ -14,7 +14,7 @@ def find_dev_required():
 setup(
     name="vedro-git-changed",
     version="0.0.1",
-    description="",
+    description="Runs only changed scenarios based on git diff against a specified branch",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
     author="Nikita Tsvetkov",

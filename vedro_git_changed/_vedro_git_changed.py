@@ -4,7 +4,7 @@ from typing import Callable, Set, Type, Union
 from git import PathLike, Repo
 from git.exc import GitCommandError, InvalidGitRepositoryError
 from vedro.core import Dispatcher, Plugin, PluginConfig
-from vedro.events import ArgParsedEvent, ArgParseEvent, StartupEvent
+from vedro.events import ArgParsedEvent, ArgParseEvent, CleanupEvent, StartupEvent
 
 __all__ = ("VedroGitChanged", "VedroGitChangedPlugin", "VedroGitChangedError",)
 
@@ -24,18 +24,21 @@ class VedroGitChangedPlugin(Plugin):
         self._git_repo_factory = git_repo_factory
         self._branch: Union[str, None] = None
         self._repo: Union[Repo, None] = None
+        self._no_changed: bool = False
 
     def subscribe(self, dispatcher: Dispatcher) -> None:
         dispatcher.listen(ArgParseEvent, self.on_arg_parse) \
                   .listen(ArgParsedEvent, self.on_arg_parsed) \
-                  .listen(StartupEvent, self.on_startup)
+                  .listen(StartupEvent, self.on_startup) \
+                  .listen(CleanupEvent, self.on_cleanup)
 
     def on_arg_parse(self, event: ArgParseEvent) -> None:
-        event.arg_parser.add_argument("--git-changed-against",
-                                      help="Git branch to compare against")
+        group = event.arg_parser.add_argument_group("Git Changed")
+        group.add_argument("--changed-against-branch",
+                           help="Run only scenarios changed against the specified git branch")
 
     def on_arg_parsed(self, event: ArgParsedEvent) -> None:
-        self._branch = event.args.git_changed_against
+        self._branch = event.args.changed_against_branch
 
     async def on_startup(self, event: StartupEvent) -> None:
         if self._branch is None:
@@ -63,10 +66,18 @@ class VedroGitChangedPlugin(Plugin):
             raise VedroGitChangedError(message) from e
 
         changed_files = self._get_changed_files()
+        self._no_changed = len(changed_files) == 0
 
         async for scenario in event.scheduler:
-            if len(changed_files) == 0 or (scenario.path not in changed_files):
+            if self._no_changed or (scenario.path not in changed_files):
                 event.scheduler.ignore(scenario)
+
+    def on_cleanup(self, event: CleanupEvent) -> None:
+        if self._branch is None:
+            return
+
+        if self._no_changed:
+            event.report.add_summary("No changed scenarios found")
 
     def _get_scenarios_path(self) -> Path:
         return Path.cwd() / "scenarios/"
@@ -97,4 +108,4 @@ class VedroGitChangedPlugin(Plugin):
 
 class VedroGitChanged(PluginConfig):
     plugin = VedroGitChangedPlugin
-    description = "Run only changed scenarios based on git diff"
+    description = "Runs only changed scenarios based on git diff against a specified branch"

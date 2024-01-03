@@ -68,7 +68,7 @@ def test_fetch_init_error():
     with then:
         assert exception.type is GitRepoError
         assert str(exception.value) == (
-            "Unable to find a Git repository in the current or any parent directories. "
+            "Unable to find a git repository in the current or any parent directories. "
             "Ensure you are in a directory that is part of a valid git repository."
         )
 

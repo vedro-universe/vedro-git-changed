@@ -31,7 +31,7 @@ class GitRepo:
             return self._git_repo_factory(Path.cwd())
         except InvalidGitRepositoryError as e:
             message = (
-                "Unable to find a Git repository in the current or any parent directories. "
+                "Unable to find a git repository in the current or any parent directories. "
                 "Ensure you are in a directory that is part of a valid git repository."
             )
             raise GitRepoError(message) from e

@@ -14,7 +14,8 @@ def find_dev_required():
 setup(
     name="vedro-git-changed",
     version="0.0.1",
-    description="Runs only scenarios that have changed based on git diff against a specified branch",
+    description=("Vedro plugin that runs test scenarios which have changed "
+                 "relative to the specified git branch"),
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
     author="Nikita Tsvetkov",

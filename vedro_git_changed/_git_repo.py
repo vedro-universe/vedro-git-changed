@@ -53,7 +53,7 @@ class GitRepo:
             # A - Added: Files that are new in the repository
             # C - Copied: Files that are copied from another file (with a recorded copy)
             # M - Modified: Files that have been changed
-            # T - Type changed: Files that have had their type changed (e.g., regular file, symlink)
+            # T - Type changed: Files that have had their type changed
             # R - Renamed: Files that have been renamed
             # For more details on the git diff command and its options, see the Git documentation:
             # https://git-scm.com/docs/git-diff

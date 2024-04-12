@@ -23,6 +23,7 @@ class VedroGitChangedPlugin(Plugin):
         self._branch: Union[str, None] = None
         self._cache_duration: int = 60  # seconds
         self._last_fetched: Nilable[int] = Nil
+        self._no_fetch: bool = False
         self._no_changed: bool = False
 
     def subscribe(self, dispatcher: Dispatcher) -> None:
@@ -39,10 +40,14 @@ class VedroGitChangedPlugin(Plugin):
         group.add_argument("--changed-fetch-cache", type=int, default=self._cache_duration,
                            help=("Duration to cache the results of 'git fetch' "
                                  f"(default: {self._cache_duration} seconds)"))
+        group.add_argument("--changed-no-fetch", action="store_true",
+                           help="Do not fetch the latest changes from the remote repository")
 
     def on_arg_parsed(self, event: ArgParsedEvent) -> None:
         self._branch = event.args.changed_against_branch
         self._cache_duration = event.args.changed_fetch_cache
+        self._no_fetch = event.args.changed_no_fetch
+
         if self._cache_duration < 0:
             raise ValueError("Cache duration must be non-negative. "
                              "Please provide a valid value for '--changed-fetch-cache'.")
@@ -51,10 +56,11 @@ class VedroGitChangedPlugin(Plugin):
         if self._branch is None:
             return
 
-        self._last_fetched = await self._local_storage.get("last_fetched")
-        if self._should_fetch(self._last_fetched):
-            self._git_repo.fetch()
-            self._last_fetched = self._now()
+        if not self._no_fetch:
+            self._last_fetched = await self._local_storage.get("last_fetched")
+            if self._should_fetch(self._last_fetched):
+                self._git_repo.fetch()
+                self._last_fetched = self._now()
 
         target_directory = Path.cwd() / "scenarios/"
         changed_files = self._git_repo.get_changed_files(self._branch, target_directory)

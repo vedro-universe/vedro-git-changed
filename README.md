@@ -67,3 +67,9 @@ For example, to disable caching, set the cache duration to 0:
 ```shell
 $ vedro run --changed-against-branch=main --changed-fetch-cache=0
 ```
+
+To disable fetching the latest changes from the remote repository, use the `--changed-no-fetch` argument:
+
+```shell
+$ vedro run --changed-against-branch=main --changed-no-fetch
+```

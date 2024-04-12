@@ -95,6 +95,24 @@ async def test_plugin_startup(*, dispatcher: Dispatcher, git_repo_: Mock, local_
 async def test_plugin_startup_no_fetch(*, dispatcher: Dispatcher,
                                        git_repo_: Mock, local_storage_: Mock):
     with given:
+        branch_name = "main"
+        await fire_arg_parsed_event(dispatcher, changed_against_branch=branch_name,
+                                    changed_no_fetch=True)
+
+    with when:
+        await fire_startup_event(dispatcher)
+
+    with then:
+        assert local_storage_.mock_calls == []
+        assert git_repo_.mock_calls == [
+            call.get_changed_files(branch_name, make_scenarios_path())
+        ]
+
+
+@pytest.mark.usefixtures(git_changed_plugin.__name__)
+async def test_plugin_startup_no_fetch_cached(*, dispatcher: Dispatcher,
+                                              git_repo_: Mock, local_storage_: Mock):
+    with given:
         await fire_arg_parsed_event(dispatcher, changed_against_branch=(branch_name := "main"))
 
         local_storage_.get.return_value = int(time())

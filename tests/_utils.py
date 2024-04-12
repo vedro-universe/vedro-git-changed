@@ -59,12 +59,15 @@ def make_vscenario(filename: str) -> VirtualScenario:
 
 
 async def fire_arg_parsed_event(dispatcher: Dispatcher, *,
-                                changed_against_branch: str, changed_fetch_cache: int = 60):
+                                changed_against_branch: str,
+                                changed_fetch_cache: int = 60,
+                                changed_no_fetch: bool = False):
     arg_parser = ArgumentParser()
     await dispatcher.fire(ArgParseEvent(arg_parser))
 
     args = Namespace(changed_against_branch=changed_against_branch,
-                     changed_fetch_cache=changed_fetch_cache)
+                     changed_fetch_cache=changed_fetch_cache,
+                     changed_no_fetch=changed_no_fetch)
     await dispatcher.fire(ArgParsedEvent(args))
 
 

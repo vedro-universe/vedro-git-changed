@@ -6,7 +6,13 @@ from typing import Callable, Type, Union
 from niltype import Nil, Nilable
 from vedro.core import Dispatcher, Plugin, PluginConfig
 from vedro.core.exp.local_storage import LocalStorageFactory, create_local_storage
-from vedro.events import ArgParsedEvent, ArgParseEvent, CleanupEvent, StartupEvent
+from vedro.events import (
+    ArgParsedEvent,
+    ArgParseEvent,
+    CleanupEvent,
+    ConfigLoadedEvent,
+    StartupEvent,
+)
 
 from ._git_repo import GitRepo
 
@@ -18,26 +24,31 @@ class VedroGitChangedPlugin(Plugin):
                  git_repo_factory: Callable[[], GitRepo] = GitRepo,
                  local_storage_factory: LocalStorageFactory = create_local_storage) -> None:
         super().__init__(config)
-        self._local_storage = local_storage_factory(self)
+        self._local_storage_factory = local_storage_factory
         self._git_repo = git_repo_factory()
         self._branch: Union[str, None] = None
-        self._cache_duration: int = 60  # seconds
+        self._default_cache_duration: int = 60
+        self._cache_duration: int = self._default_cache_duration
         self._last_fetched: Nilable[int] = Nil
         self._no_fetch: bool = False
         self._no_changed: bool = False
 
     def subscribe(self, dispatcher: Dispatcher) -> None:
-        dispatcher.listen(ArgParseEvent, self.on_arg_parse) \
+        dispatcher.listen(ConfigLoadedEvent, self.on_config_loaded) \
+                  .listen(ArgParseEvent, self.on_arg_parse) \
                   .listen(ArgParsedEvent, self.on_arg_parsed) \
                   .listen(StartupEvent, self.on_startup) \
                   .listen(CleanupEvent, self.on_cleanup)
+
+    def on_config_loaded(self, event: ConfigLoadedEvent) -> None:
+        self._local_storage = self._local_storage_factory(self, event.config.project_dir)
 
     def on_arg_parse(self, event: ArgParseEvent) -> None:
         group = event.arg_parser.add_argument_group("Git Changed")
         group.add_argument("--changed-against-branch",
                            help=("Run only scenarios that have changed relative to the "
                                  "specified git branch"))
-        group.add_argument("--changed-fetch-cache", type=int, default=self._cache_duration,
+        group.add_argument("--changed-fetch-cache", type=int, default=self._default_cache_duration,
                            help=("Duration to cache the results of 'git fetch' "
                                  f"(default: {self._cache_duration} seconds)"))
         group.add_argument("--changed-no-fetch", action="store_true",
@@ -51,6 +62,10 @@ class VedroGitChangedPlugin(Plugin):
         if self._cache_duration < 0:
             raise ValueError("Cache duration must be non-negative. "
                              "Please provide a valid value for '--changed-fetch-cache'.")
+
+        if self._no_fetch and self._cache_duration != self._default_cache_duration:
+            raise ValueError("The options '--changed-no-fetch' and '--changed-fetch-cache' "
+                             "cannot be used together. Please choose one.")
 
     async def on_startup(self, event: StartupEvent) -> None:
         if self._branch is None:

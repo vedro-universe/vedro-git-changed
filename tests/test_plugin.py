@@ -1,4 +1,5 @@
 from datetime import datetime
+from pathlib import Path
 from time import time
 from unittest.mock import Mock, call, patch
 
@@ -18,19 +19,21 @@ from ._utils import (
     local_storage_,
     make_scenarios_path,
     make_vscenario,
+    project_dir,
 )
 
-__all__ = ("git_changed_plugin", "dispatcher", "git_repo_", "local_storage_",)  # fixtures
+__all__ = ("git_changed_plugin", "dispatcher", "git_repo_",
+           "local_storage_", "project_dir",)  # fixtures
 
 
 @pytest.mark.usefixtures(git_changed_plugin.__name__)
-async def test_plugin_arg_parsed_error(*, dispatcher: Dispatcher):
+async def test_plugin_arg_parsed_error(*, dispatcher: Dispatcher, project_dir: Path):
     with given:
         changed_against_branch = "main"
         changed_fetch_cache = -1
 
     with when, raises(Exception) as exception:
-        await fire_arg_parsed_event(dispatcher,
+        await fire_arg_parsed_event(dispatcher, project_dir,
                                     changed_against_branch=changed_against_branch,
                                     changed_fetch_cache=changed_fetch_cache)
 
@@ -43,10 +46,11 @@ async def test_plugin_arg_parsed_error(*, dispatcher: Dispatcher):
 
 
 @pytest.mark.usefixtures(git_changed_plugin.__name__)
-async def test_plugin_startup_no_changes(*, dispatcher: Dispatcher,
+async def test_plugin_startup_no_changes(*, dispatcher: Dispatcher, project_dir: Path,
                                          git_repo_: Mock, local_storage_: Mock):
     with given:
-        await fire_arg_parsed_event(dispatcher, changed_against_branch=(branch_name := "main"))
+        await fire_arg_parsed_event(dispatcher, project_dir,
+                                    changed_against_branch=(branch_name := "main"))
 
         scenario1, scenario2 = make_vscenario("scenario1.py"), make_vscenario("scenario2.py")
         scheduler = ScenarioScheduler(scenarios=[scenario1, scenario2])
@@ -66,9 +70,11 @@ async def test_plugin_startup_no_changes(*, dispatcher: Dispatcher,
 
 
 @pytest.mark.usefixtures(git_changed_plugin.__name__)
-async def test_plugin_startup(*, dispatcher: Dispatcher, git_repo_: Mock, local_storage_: Mock):
+async def test_plugin_startup(*, dispatcher: Dispatcher, project_dir: Path,
+                              git_repo_: Mock, local_storage_: Mock):
     with given:
-        await fire_arg_parsed_event(dispatcher, changed_against_branch=(branch_name := "main"))
+        await fire_arg_parsed_event(dispatcher, project_dir,
+                                    changed_against_branch=(branch_name := "main"))
 
         scenario1, scenario2 = make_vscenario("scenario1.py"), make_vscenario("scenario2.py")
         scheduler = ScenarioScheduler(scenarios=[scenario1, scenario2])
@@ -92,12 +98,12 @@ async def test_plugin_startup(*, dispatcher: Dispatcher, git_repo_: Mock, local_
 
 
 @pytest.mark.usefixtures(git_changed_plugin.__name__)
-async def test_plugin_startup_no_fetch(*, dispatcher: Dispatcher,
+async def test_plugin_startup_no_fetch(*, dispatcher: Dispatcher, project_dir: Path,
                                        git_repo_: Mock, local_storage_: Mock):
     with given:
         branch_name = "main"
-        await fire_arg_parsed_event(dispatcher, changed_against_branch=branch_name,
-                                    changed_no_fetch=True)
+        await fire_arg_parsed_event(dispatcher, project_dir,
+                                    changed_against_branch=branch_name, changed_no_fetch=True)
 
     with when:
         await fire_startup_event(dispatcher)
@@ -110,10 +116,11 @@ async def test_plugin_startup_no_fetch(*, dispatcher: Dispatcher,
 
 
 @pytest.mark.usefixtures(git_changed_plugin.__name__)
-async def test_plugin_startup_no_fetch_cached(*, dispatcher: Dispatcher,
+async def test_plugin_startup_no_fetch_cached(*, dispatcher: Dispatcher, project_dir: Path,
                                               git_repo_: Mock, local_storage_: Mock):
     with given:
-        await fire_arg_parsed_event(dispatcher, changed_against_branch=(branch_name := "main"))
+        await fire_arg_parsed_event(dispatcher, project_dir,
+                                    changed_against_branch=(branch_name := "main"))
 
         local_storage_.get.return_value = int(time())
 
@@ -130,10 +137,10 @@ async def test_plugin_startup_no_fetch_cached(*, dispatcher: Dispatcher,
 
 
 @pytest.mark.usefixtures(git_changed_plugin.__name__)
-async def test_plugin_cleanup_no_changes(*, dispatcher: Dispatcher,
+async def test_plugin_cleanup_no_changes(*, dispatcher: Dispatcher, project_dir: Path,
                                          git_repo_: Mock, local_storage_: Mock):
     with given:
-        await fire_arg_parsed_event(dispatcher, changed_against_branch="main")
+        await fire_arg_parsed_event(dispatcher, project_dir, changed_against_branch="main")
 
         with patch("time.time", return_value=(now := 12345)):
             await fire_startup_event(dispatcher)
@@ -157,9 +164,10 @@ async def test_plugin_cleanup_no_changes(*, dispatcher: Dispatcher,
 
 
 @pytest.mark.usefixtures(git_changed_plugin.__name__)
-async def test_plugin_cleanup(*, dispatcher: Dispatcher, git_repo_: Mock, local_storage_: Mock):
+async def test_plugin_cleanup(*, dispatcher: Dispatcher, project_dir: Path,
+                              git_repo_: Mock, local_storage_: Mock):
     with given:
-        await fire_arg_parsed_event(dispatcher, changed_against_branch="main")
+        await fire_arg_parsed_event(dispatcher, project_dir, changed_against_branch="main")
 
         git_repo_.get_changed_files.return_value = [
             make_scenarios_path() / "scenario1.py"

@@ -5,18 +5,25 @@ from unittest.mock import AsyncMock, Mock
 
 import pytest
 from niltype import Nil
+from vedro import Config as _Config
 from vedro import Scenario
 from vedro.core import Dispatcher
 from vedro.core import MonotonicScenarioScheduler as ScenarioScheduler
 from vedro.core import Report, VirtualScenario
 from vedro.core.exp.local_storage import LocalStorage
-from vedro.events import ArgParsedEvent, ArgParseEvent, CleanupEvent, StartupEvent
+from vedro.events import (
+    ArgParsedEvent,
+    ArgParseEvent,
+    CleanupEvent,
+    ConfigLoadedEvent,
+    StartupEvent,
+)
 
 from vedro_git_changed import GitRepo, VedroGitChanged, VedroGitChangedPlugin
 
 __all__ = ("local_storage_", "git_repo_", "git_changed_plugin", "dispatcher",
            "fire_arg_parsed_event", "fire_startup_event", "fire_cleanup_event",
-           "make_scenarios_path", "make_vscenario",)
+           "fire_config_loaded_event", "make_scenarios_path", "make_vscenario", "project_dir")
 
 
 @pytest.fixture()
@@ -58,10 +65,24 @@ def make_vscenario(filename: str) -> VirtualScenario:
     return VirtualScenario(_Scenario, steps=[])
 
 
-async def fire_arg_parsed_event(dispatcher: Dispatcher, *,
+@pytest.fixture()
+def project_dir(tmp_path: Path) -> Path:
+    return tmp_path
+
+
+async def fire_config_loaded_event(dispatcher: Dispatcher, project_dir_: Path) -> None:
+    class Config(_Config):
+        project_dir = project_dir_
+
+    await dispatcher.fire(ConfigLoadedEvent(Path(), Config))
+
+
+async def fire_arg_parsed_event(dispatcher: Dispatcher, project_dir: Path, *,
                                 changed_against_branch: str,
                                 changed_fetch_cache: int = 60,
                                 changed_no_fetch: bool = False):
+    await fire_config_loaded_event(dispatcher, project_dir)
+
     arg_parser = ArgumentParser()
     await dispatcher.fire(ArgParseEvent(arg_parser))
 

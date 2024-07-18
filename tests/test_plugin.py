@@ -27,7 +27,7 @@ __all__ = ("git_changed_plugin", "dispatcher", "git_repo_",
 
 
 @pytest.mark.usefixtures(git_changed_plugin.__name__)
-async def test_plugin_arg_parsed_error(*, dispatcher: Dispatcher, project_dir: Path):
+async def test_plugin_arg_parsed_cache_error(*, dispatcher: Dispatcher, project_dir: Path):
     with given:
         changed_against_branch = "main"
         changed_fetch_cache = -1
@@ -42,6 +42,28 @@ async def test_plugin_arg_parsed_error(*, dispatcher: Dispatcher, project_dir: P
         assert str(exception.value) == (
             "Cache duration must be non-negative. "
             "Please provide a valid value for '--changed-fetch-cache'."
+        )
+
+
+@pytest.mark.usefixtures(git_changed_plugin.__name__)
+async def test_plugin_arg_parsed_no_fetch_and_cache_error(*, dispatcher: Dispatcher,
+                                                          project_dir: Path):
+    with given:
+        changed_against_branch = "main"
+        changed_fetch_cache = 120
+        changed_no_fetch = True
+
+    with when, raises(Exception) as exception:
+        await fire_arg_parsed_event(dispatcher, project_dir,
+                                    changed_against_branch=changed_against_branch,
+                                    changed_fetch_cache=changed_fetch_cache,
+                                    changed_no_fetch=changed_no_fetch)
+
+    with then:
+        assert exception.type is ValueError
+        assert str(exception.value) == (
+            "The options '--changed-no-fetch' and '--changed-fetch-cache' "
+            "cannot be used together. Please choose one."
         )
 
 

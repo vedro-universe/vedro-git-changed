@@ -1,6 +1,6 @@
 # Vedro Git Changed
 
-[![Codecov](https://img.shields.io/codecov/c/github/vedro-universe/vedro-git-changed/master.svg?style=flat-square)](https://codecov.io/gh/vedro-universe/vedro-git-changed)
+[![Codecov](https://img.shields.io/codecov/c/github/vedro-universe/vedro-git-changed/main.svg?style=flat-square)](https://codecov.io/gh/vedro-universe/vedro-git-changed)
 [![PyPI](https://img.shields.io/pypi/v/vedro-git-changed.svg?style=flat-square)](https://pypi.python.org/pypi/vedro-git-changed/)
 [![PyPI - Downloads](https://img.shields.io/pypi/dm/vedro-git-changed?style=flat-square)](https://pypi.python.org/pypi/vedro-git-changed/)
 [![Python Version](https://img.shields.io/pypi/pyversions/vedro-git-changed.svg?style=flat-square)](https://pypi.python.org/pypi/vedro-git-changed/)
